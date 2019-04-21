@@ -9,6 +9,8 @@ int main()
 	auto x = cons(42, Cons<int>::nil);
 	//auto x = cons(42, Cons::nil);
 	x = cons(43, x);
+	car(x) = 45;
+	x = cons(new int{53}, x);
 	cout << "car(x)=" << car(x) << endl;
 	cout << "cadr(x)=" << car(cdr(x)) << endl;
 
