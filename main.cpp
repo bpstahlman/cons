@@ -11,6 +11,9 @@ int main()
 	x = cons(43, x);
 	car(x) = 45;
 	x = cons(new int{53}, x);
+	x = cdr(x);
+	cout << "car(x)=" << car(x) << endl;
+	x = cdr(x);
 	cout << "car(x)=" << car(x) << endl;
 	cout << "cadr(x)=" << car(cdr(x)) << endl;
 
