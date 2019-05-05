@@ -20,8 +20,6 @@ template<typename T> class Cons : private shared_ptr<Cons_impl<T>> {
 	using base = shared_ptr<Cons_impl<T>>;
 	public:
 	friend class Cons_impl<T>;
-	// Decide which class really needs friendship...
-	//friend Cons<T> cons<>(const T&, Cons<T>);
 	friend Cons<T> cons<>(T&&, Cons<T>);
 	friend Cons<T> cons<>(T*, Cons<T>);
 	friend T& car<>(Cons<T> cell);
@@ -39,13 +37,8 @@ template<typename T> const Cons<T> Cons<T>::nil{};
 template<typename T> class Cons_impl {
 public:
 	friend class Cons<T>;
-	//friend Cons<T> cons<>(const T&, Cons<T>);
-	friend Cons<T> cons<>(T&&, Cons<T>);
-	friend Cons<T> cons<>(T*, Cons<T>);
 	friend T& car<>(Cons<T> cell);
 	friend Cons<T> cdr<>(Cons<T> cell);
-	//Cons_impl(const Cons_impl &rhs);
-	//Cons_impl &operator=(const Cons_impl &rhs);
 	~Cons_impl() {}
 	bool is_empty() const {
 		return !(bool)*this;
@@ -58,14 +51,6 @@ private:
 	Cons<T> cdr {nullptr};
 };
 
-// cons primitive
-// TODO: Use perfect forwarding
-#if 0
-template<typename T> Cons<T> cons(const T &val, Cons<T> cdr)
-{
-	return Cons<T>{new T{val}, cdr};
-}
-#endif
 template<typename T> Cons<T> cons(T&& val, Cons<T> cdr)
 {
 	return Cons<T>{new T{std::forward<T>(val)}, cdr};
@@ -90,7 +75,6 @@ template<typename T> Cons<T> cdr(Cons<T> cell)
 	return cell ? cell->cdr : Cons<T>::nil;
 }
 
-// FIXME: Maybe remove...
 
 // TODO
 // initializer_list ctor
