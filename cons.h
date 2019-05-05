@@ -4,6 +4,7 @@
 #include <memory>
 
 using std::shared_ptr;
+using std::nullptr_t;
 
 namespace Lisp {
 	
@@ -11,8 +12,10 @@ namespace Lisp {
 template<typename T> class Cons;
 template<typename T> class Cons_impl;
 // Friend functions
-template<typename T> Cons<T> cons(T&& val, Cons<T> cdr);
-template<typename T> Cons<T> cons(T* p, Cons<T> cdr);
+//template<typename T> Cons<T> cons(T&& val, Cons<T> cdr);
+//template<typename T> Cons<T> cons(T* p, Cons<T> cdr);
+template<typename T, typename U> Cons<T> cons(T&& val, const U& ptr);
+template<typename T, typename U> Cons<T> cons(T* p, const U& ptr);
 template<typename T> T& car(Cons<T> cell);
 template<typename T> Cons<T> cdr(Cons<T> cell);
 
@@ -22,8 +25,10 @@ template<typename T> class Cons : private shared_ptr<Cons_impl<T>> {
 	friend class Cons_impl<T>;
 	// Decide which class really needs friendship...
 	//friend Cons<T> cons<>(const T&, Cons<T>);
-	friend Cons<T> cons<>(T&&, Cons<T>);
-	friend Cons<T> cons<>(T*, Cons<T>);
+	//friend Cons<T> cons<>(T&&, Cons<T>);
+	//friend Cons<T> cons<>(T*, Cons<T>);
+	template<typename U> friend Cons<T> cons(T&&, const U&);
+	template<typename U> friend Cons<T> cons(T*, const U&);
 	friend T& car<>(Cons<T> cell);
 	friend Cons<T> cdr<>(Cons<T> cell);
 	const static Cons nil;
@@ -40,8 +45,10 @@ template<typename T> class Cons_impl {
 public:
 	friend class Cons<T>;
 	//friend Cons<T> cons<>(const T&, Cons<T>);
-	friend Cons<T> cons<>(T&&, Cons<T>);
-	friend Cons<T> cons<>(T*, Cons<T>);
+	//friend Cons<T> cons<>(T&&, Cons<T>);
+	//friend Cons<T> cons<>(T*, Cons<T>);
+	template<typename U> friend Cons<T> cons(T&&, const U&);
+	template<typename U> friend Cons<T> cons(T*, const U&);
 	friend T& car<>(Cons<T> cell);
 	friend Cons<T> cdr<>(Cons<T> cell);
 	//Cons_impl(const Cons_impl &rhs);
@@ -66,14 +73,24 @@ template<typename T> Cons<T> cons(const T &val, Cons<T> cdr)
 	return Cons<T>{new T{val}, cdr};
 }
 #endif
-template<typename T> Cons<T> cons(T&& val, Cons<T> cdr)
+template<typename T> Cons<T> cons<Cons<T>>(T&& val, const Cons<T>& cdr)
 {
 	return Cons<T>{new T{std::forward<T>(val)}, cdr};
 }
 
-template<typename T> Cons<T> cons(T* p, Cons<T> cdr)
+template<typename T> Cons<T> cons<Cons<T>>(T* p, const Cons<T>& cdr)
 {
 	return Cons<T>{p, cdr};
+}
+
+template<typename T> Cons<T> cons<nullptr_t>(T&& val, nullptr_t ptr)
+{
+	return Cons<T>{new T{std::forward<T>(val)}, Cons<T>::nil};
+}
+
+template<typename T> Cons<T> cons<nullptr_t>(T* p, nullptr_t ptr)
+{
+	return Cons<T>{p, Cons<T>::nil};
 }
 
 template<typename T> T& car(Cons<T> cell)
