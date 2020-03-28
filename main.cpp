@@ -22,6 +22,7 @@ int main()
 {
 	auto x = cons(42, Nil<int>);
 	auto foo = cons(Foo{1, 2}, Nil<Foo>);
+	foo = cons(Foo{3, 4}, foo);
 
 	car(cdr(foo)) = Foo{5, 10};
 	cout << "car(cdr(foo)).x = " << car(cdr(foo)).x << endl;
@@ -33,6 +34,7 @@ int main()
 		auto bar = cdr(foo);
 		bar = cons(Foo{42, 43}, bar);
 		bar = cons(Foo{100, 200}, bar);
+		bar = cons(bar, 500, 600);
 
 	}
 

@@ -13,7 +13,7 @@ template <typename T> using Cons = shared_ptr<Cons_impl<T>>;
 template <typename T> Cons<T> Nil{};
 
 template<typename T, typename... Args>
-Cons<T> cons(Args&&... args, Cons<T> cdr);
+	Cons<T> cons(Cons<T> cdr, Args&&... args);
 template <typename T> Cons<T> cons(T&& val, Cons<T> cdr);
 template <typename T> T& car(Cons<T> cell);
 template <typename T> Cons<T> cdr(Cons<T> cell);
@@ -27,7 +27,15 @@ public:
 	friend Cons<T> cons<>(T&&, Cons<T>);
 	// TODO: Understand why cons<> causes error.
 	template<typename... Args>
-	friend Cons<T> cons(Args&&... args, Cons<T> cdr);
+	friend Cons<T> cons(Cons<T> cdr, Args&&... args) {
+		// TODO: How to make this a friend?
+		// Weird! Why does this compile, even if I use cdr.car or cdr.foobar???
+		// Perhaps because it's not being instantiated?
+		T x{cdr->car};
+		return Cons<T>{
+			make_shared<typename Cons_impl<T>::Cons_impl_shared>(
+					cdr, std::forward<Args>(args)...)};
+	}
 	friend T& car<>(Cons<T> cell);
 	friend Cons<T> cdr<>(Cons<T> cell);
 	virtual ~Cons_impl() {
@@ -36,7 +44,7 @@ public:
 
 private:
 	template<typename... Args>
-	Cons_impl(Args&&... car_init, Cons<T> cdr_init)
+	Cons_impl(Cons<T> cdr_init, Args&&... car_init)
 		: car{std::forward<Args>(car_init)...}, cdr{cdr_init} {}
 	Cons_impl(T&& car_init, Cons<T> cdr_init)
 		: car{std::forward<T>(car_init)}, cdr{cdr_init} {}
@@ -53,17 +61,19 @@ struct Cons_impl<T>::Cons_impl_shared : public Cons_impl<T> {
 	: Cons_impl(forward<Args>(args)...) {}
 };
 
+#if 0
 template<typename T, typename... Args>
-Cons<T> cons(Args&&... args, Cons<T> cdr)
+Cons<T> cons(Cons<T> cdr, Args&&... args)
 {
-	// TODO: Make sure this is really friend of Cons_impl.
+	// TODO: How to make this a friend?
 	// Weird! Why does this compile, even if I use cdr.car or cdr.foobar???
 	// Perhaps because it's not being instantiated?
 	T x{cdr->car};
 	return Cons<T>{
 		make_shared<typename Cons_impl<T>::Cons_impl_shared>(
-				std::forward<Args>(args)..., cdr)};
+				cdr, std::forward<Args>(args)...)};
 }
+#endif
 
 template<typename T> Cons<T> cons(T&& val, Cons<T> cdr)
 {
