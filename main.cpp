@@ -4,23 +4,37 @@
 using namespace std;
 using namespace Lisp;
 
+struct Foo;
 struct Foo {
+	friend ostream& operator<<(ostream& os, const Foo& foo);
 	Foo(int xin, int yin) : x{xin}, y{yin} {}
-	virtual ~Foo() { cout << "Foo dtor(" << this << ")\n"; }
+	virtual ~Foo() { cout << "Destructing " << *this << "\n"; }
 	int x, y;
 };
 
+ostream& operator<<(ostream& os, const Foo& foo)
+{
+	cout << "Foo(" << foo.x << ", " << foo.y << ")\n";
+	return os;
+}
+
 int main()
 {
-	auto x = cons(42, Cons<int>::nil);
-	auto foo = cons<Foo>(Foo{1, 2}, Cons<Foo>::nil);
-	foo = cons(Foo{3, 4}, foo);
+	auto x = cons(42, Nil<int>);
+	auto foo = cons(Foo{1, 2}, Nil<Foo>);
 
 	car(cdr(foo)) = Foo{5, 10};
 	cout << "car(cdr(foo)).x = " << car(cdr(foo)).x << endl;
 	
 	cout << "head=" << car(x) << endl;
 	cout << "foo head x=" << car(foo).x << " foo head y=" << car(foo).y << endl;
+
+	{
+		auto bar = cdr(foo);
+		bar = cons(Foo{42, 43}, bar);
+		bar = cons(Foo{100, 200}, bar);
+
+	}
 
 	return 0;
 }
