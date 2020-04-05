@@ -12,8 +12,8 @@ template <typename T> class Cons_impl;
 template <typename T> using Cons = shared_ptr<Cons_impl<T>>;
 template <typename T> Cons<T> Nil{};
 
-template<typename T, typename... Args>
-	Cons<T> cons(Cons<T> cdr, Args&&... args);
+//template<typename T, typename... Args>
+//	Cons<T> cons(Cons<T> cdr, Args&&... args);
 template <typename T> Cons<T> cons(T&& val, Cons<T> cdr);
 template <typename T> T& car(Cons<T> cell);
 template <typename T> Cons<T> cdr(Cons<T> cell);
@@ -26,12 +26,16 @@ public:
 	struct Cons_impl_shared;
 	friend Cons<T> cons<>(T&&, Cons<T>);
 	// TODO: Understand why cons<> causes error.
+	// Primary template friend declaration
+	// TODO: Find out whether ADL is what allows this to be seen.
 	template<typename... Args>
-	friend Cons<T> cons(Cons<T> cdr, Args&&... args) {
+	friend Cons<T> cons(Cons<T> cdr, Args&&... args)
+	{
 		// TODO: How to make this a friend?
 		// Weird! Why does this compile, even if I use cdr.car or cdr.foobar???
 		// Perhaps because it's not being instantiated?
 		T x{cdr->car};
+		cout << "x=" << x << endl;
 		return Cons<T>{
 			make_shared<typename Cons_impl<T>::Cons_impl_shared>(
 					cdr, std::forward<Args>(args)...)};
@@ -65,13 +69,6 @@ struct Cons_impl<T>::Cons_impl_shared : public Cons_impl<T> {
 template<typename T, typename... Args>
 Cons<T> cons(Cons<T> cdr, Args&&... args)
 {
-	// TODO: How to make this a friend?
-	// Weird! Why does this compile, even if I use cdr.car or cdr.foobar???
-	// Perhaps because it's not being instantiated?
-	T x{cdr->car};
-	return Cons<T>{
-		make_shared<typename Cons_impl<T>::Cons_impl_shared>(
-				cdr, std::forward<Args>(args)...)};
 }
 #endif
 
