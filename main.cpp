@@ -1,83 +1,71 @@
+// --- main.cpp ---
 #include <iostream>
 #include "cons.h"
 
 using namespace std;
 using namespace Lisp;
 
-struct Foo;
 struct Foo {
 	friend ostream& operator<<(ostream& os, const Foo& foo);
+	// Note: Move ctor provided only to verify that it's called for temporaries.
+	Foo(Foo&& rhs) : x{rhs.x}, y{rhs.y} {
+#ifdef DEBUG
+		cout << "Move-constructing Foo@" << this << " from " <<
+			rhs << "@" << &rhs << endl;
+#endif
+	}
 	Foo(int xin, int yin) : x{xin}, y{yin} {}
-	virtual ~Foo() { cout << "Destructing " << *this << "\n"; }
+	virtual ~Foo() {
+#ifdef DEBUG
+		cout << "Destructing " << *this << "\n";
+#endif
+	}
 	int x, y;
 };
 
 ostream& operator<<(ostream& os, const Foo& foo)
 {
-	cout << "Foo(" << foo.x << ", " << foo.y << ")\n";
+	cout << "Foo{" << foo.x << ", " << foo.y << "}";
 	return os;
 }
 
 int main()
 {
+	cout << "Construct list of ints\n";
 	auto x = Cons<int>::Nil.cons(42);
+	x = x.cons(43).cons(44).cons(45);
+	cout << "Construct list of Foo\n";
 	auto foo = Cons<Foo>::Nil.cons(3, 4);
-	foo.cons(5, 6);
-	foo.cons(7, 8);
+	foo = foo.cons(5, 6).cons(7, 8);
+
+	// Create a list of lists.
+	auto xx = Cons<Cons<int>>::Nil.cons(x);
+	xx = xx.cons(Cons<int>::Nil.cons(100).cons(101));
+	cout << "xx:" << endl;
+	cout << xx << endl;
+	// Try out cdar, cddar, etc...
+	cout << "(cdar xx): " << cdar(xx) << endl;
+	cout << "(cdadr xx): " << cdadr(xx) << endl;
 
 	{
-		auto bar = foo.cdr();
-		bar = bar.cons(Foo{42, 43});
-		bar = bar.cons(Foo{52, 53});
-		cout << "bar.cdr.car: " << bar.cdr().car() << endl;
+		cout << "Entering block...\n";
+		// Create a list called bar by consing a few Foo temporaries onto head
+		// of foo list.
+		// Note: Structural sharing ensures the last few elements are shared
+		// between the foo and bar lists.
+		auto bar = foo.cons(Foo{42, 43}).cons(Foo{44, 45});
+		caddr(bar).x *= 1000;
+		caddr(bar).y *= 1000;
+		// Verify that both lists have changed (due to structural sharing).
+		cout << "foo:\n" << foo << endl;
+		cout << "bar:\n" << bar << endl;
+		cout << "Leaving block...\n";
+
+		cout << bar << endl;
+
 	}
 
 	return 0;
 }
-
-#if 0
-struct Foo {
-		static int cnt;
-		Foo() : x{cnt++} { cout << "default constructor\n"; }
-		Foo(const Foo& rhs) : x{rhs.x} { cout << "Foo copy constructor\n"; }
-		Foo(const Foo&& rhs) : x{rhs.x} { cout << "Foo move constructor\n"; }
-		Foo& operator=(const Foo& rhs) {
-			x = rhs.x; cout << "Foo copy assignment\n"; return *this;
-		}
-		Foo& operator=(const Foo&& rhs) {
-			x = rhs.x; cout << "Foo move assignment\n"; return *this;
-		}
-		~Foo() { cout << "Foo destructor\n"; }
-		int x;
-};
-
-int Foo::cnt {0};
-
-ostream& operator<<(ostream& os, const Foo& foo)
-{
-	os << foo.x;
-}
-
-int main()
-{
-	auto x = cons(42, Cons<int>::nil);
-	x = cons(43, x);
-	car(x) = 45;
-	x = cons(53, x);
-	x = cdr(x);
-	cout << "car(x)=" << car(x) << endl;
-	x = cdr(x);
-	cout << "car(x)=" << car(x) << endl;
-	//cout << "cadr(x)=" << car(cdr(x)) << endl;
-	
-#if 0
-	auto f = cons(Foo{}, Cons<Foo>::nil);
-	f = cons(Foo{}, f);
-	cout << car(f) << " " << car(cdr(f)) << " " << endl;
-#endif
-
-	return 0;
-}
-#endif
 
 // vim:ts=4:sw=4:noet
